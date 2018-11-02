@@ -115,7 +115,7 @@ int dc_hit(dc_set *set, int *index) {
 	int hit = 0;
 	// Loop though ways
 	for (int i = 0; i < DC_WAYS; i++) {
-		if ((set->d_line.tag == tag) && (set->d_line.mesi != I)) {
+		if ((set->d_line[index].tag == tag) && (set->d_line[index].mesi != I)) {
 			hit = 1; // Hit
 			*index = i; // Store index of matching way 
 		}
@@ -123,7 +123,7 @@ int dc_hit(dc_set *set, int *index) {
 	return hit;
 }
 
-// Update LRU bits
+// Update LRU bits (data cache)
 int LRU_update(dc_set *set, int *index, int inv) {
 	// If LRU bits are being updated as a result
 	// of an invalidate command set LRU to 000 (Least recently
@@ -131,13 +131,13 @@ int LRU_update(dc_set *set, int *index, int inv) {
 	int old_LRU_value = inv ? DC_LRU : set->d_line[index].lru;
 	for (int i=0; i < DC_WAYS; i++) {
 		// decrement all values larger than old tag
-		if (set->d_line[i] > old_LRU_value)
+		if (set->d_line[i].lru > old_LRU_value)
 			set->d_line[i].lru -= 1;
 	}
 	set->d_line[index].lru = DC_MRU; // Constant for b111
 }
 
-// Get index of cache line to be evicted
+// Get index of cache line to be evicted (data cache)
 int get_LRU_index(dc_set *set) {
 	for (int i=0; i < DC_WAYS; i++) {
 		if (set->d_line[i].lru == DC_LRU)
@@ -153,7 +153,7 @@ int ic_hit(ic_set *set, int *index) {
 	int hit = 0;
 	// Loop though ways
 	for (int i = 0; i < IC_WAYS; i++) {
-		if ((set->i_line.tag == tag) && (set->i_line.valid != 0)) {
+		if ((set->i_line[index].tag == tag) && (set->i_line[index].valid != 0)) {
 			hit = 1; // Hit
 			*index = i; // Store index of matching way 
 		}
@@ -166,7 +166,7 @@ int ic_LRU_update(ic_set *set, int *index) {
 	int old_LRU_value = set->i_line[index].lru;
 	for (int i=0; i < IC_WAYS; i++) {
 		// decrement all values larger than old tag
-		if (set->i_line[i] > old_LRU_value)
+		if (set->i_line[i].lru > old_LRU_value)
 			set->i_line[i].lru -= 1;
 	}
 	set->d_line[index].lru = IC_MRU; // Constant for b11
