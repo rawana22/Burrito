@@ -82,7 +82,7 @@ else if (cmd == 1) { // write to data cache
 	} // Nothing to do if no way has matching tag
 } else if (cmd == 4) { // Data request from L2 (RFO from snooping processor)
 
-	d_set->accessed = 1; // Should I do this for Invalidatate or RFO from snooping?
+	// Accessed flag not set for Invalidate or FRO command
 
 	if (dc_hit(d_set, &hit_index)) {
 		LRU_update(d_set, hit_index, 1); // Invalidating line.
