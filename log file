@@ -1,0 +1,67 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static int num_ways = 8;
+
+int cache_status(FILE *log_file_ptr)
+{
+	// print    cache status: 
+	for (int i = 0, i < cache_size, i++){
+		//if cache has been accessed go through the ways
+		if (d_cache[i], accessed){
+			//if 8 way for exmaple, display all 8 lines these 4 things
+			for (int j = 0; j < num_ways; j++){
+			fprintf(log_file_ptr, "------ cache status -----", );
+			fprintf(log_file_ptr, "index: %d\n", i)
+			fprintf(log_file_ptr, "way: %d\n", j);
+			fprintf(log_file_ptr, "LRU bits: %d\n", d_cache[i].dc_line[j].LRU);
+			fprintf(log_file_ptr, "MESI bits: %d\n", d_cache[i].dc_line[j].mesi);
+			fprintf(log_file_ptr, "tag bits: %d\n", d_cache[i].dc_line[j].tag);
+			}
+		}
+	}
+}
+
+int cache_reset()
+{
+	//instruction cache
+	int hit_counter_inst_cache = 0;
+	int miss_counter_inst_cache = 0;
+	int read_counter_inst_cache = 0;
+	int write_counter_inst_cache = 0;
+	//data cache
+	int hit_counter_data_cache = 0;
+	int miss_counter_data_cache = 0;
+	int read_counter_data_cache = 0;
+	int write_counter_data_cache = 0;
+	
+	float hit_ratio;
+
+	for (int i = 0; i < cache_size; i++){
+		dcache[i].accessed = 0;
+		for (int j = 0; j < numb_ways; j++){
+			d_cache[i].accessed = 0;
+			for (int j = 0; j < numb_ways; j++){
+				d_cache[i].dc_line[0].LRU = 0;
+				d_cache[i].dc_line[0].mesi = 0;
+				d_cache[i].dc_line[0].tag = 0;
+			}
+		}
+	}
+}
+
+int main(){
+	//open log file
+	FILE *fptr;
+
+	if ((fptr = fopen("C:\\log_file.txt","w")) == NULL){
+       printf("Error! opening file");
+
+       // Program exits if the file pointer returns NULL.
+       exit(1);
+   }
+
+   cache_status(fptr);
+   cache_reset();
+}
