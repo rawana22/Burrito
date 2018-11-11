@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
 			dc_read_cntr++;
 			if (dc_hit(d_set, tag, &hit_index)) {
 				dc_hit_cntr++;
-				LRU_update(d_set, hit_index, 0); // Hit, existing data is MRU
+				LRU_update(d_set, hit_index); // Hit, existing data is MRU
 				d_line = &d_set->d_line[hit_index];
 				switch (d_line->mesi) {
 					case M: break; // No state change
@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
 			} else { // Miss / I: 
 				dc_miss_cntr++;
 				LRU_index = get_LRU_index(d_set);
-				LRU_update(d_set, LRU_index, 0); // Miss, new data will be MRU
+				LRU_update(d_set, LRU_index); // Miss, new data will be MRU
 				d_line = &d_set->d_line[LRU_index];
 				if (d_line->mesi == M) // Victim modified
 					write_to_L2(dc_addr(d_line, index)); // Write back
@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
 			dc_write_cntr++;
 			if (dc_hit(d_set, tag, &hit_index)) {
 				dc_hit_cntr++;
-				LRU_update(d_set, hit_index, 0);
+				LRU_update(d_set, hit_index);
 				d_line = &d_set->d_line[hit_index];
 				switch (d_line->mesi) {
 					case M: break; // No state change
@@ -93,17 +93,16 @@ int main(int argc, char **argv) {
 			} else { // Miss / I: 
 				dc_miss_cntr++;
 				int LRU_index = get_LRU_index(d_set);
-				LRU_update(d_set, LRU_index, 0);
+				LRU_update(d_set, LRU_index);
 				d_line = &d_set->d_line[LRU_index];
 				if (d_line->mesi == M) // Data modified
 					write_to_L2(dc_addr(d_line, index)); // Write back
-				if (!d_set->accessed) { // First write
-					read_from_L2(addr); // Write allocate (Should this also be RFO?)
-					write_to_L2(addr); // Write through
+				RFO_from_L2(addr); // Miss, must read data
+				if (!d_set->accessed) { // First write, write though policy
+					write_to_L2(addr);
 					d_line->mesi = E;
 				}
-				else {
-					RFO_from_L2(addr); // RFO new data
+				else { // Normal write, write back policy
 					d_line->mesi = M;
 				}
 				d_line->tag = tag; // Store new tag
@@ -129,29 +128,24 @@ int main(int argc, char **argv) {
 			if (dc_hit(d_set, tag, &hit_index)) {
 				if (d_set->d_line[hit_index].mesi == S) {
 					d_set->d_line[hit_index].mesi == I;
-					LRU_update(d_set, hit_index, 1); // Invalidate line
-					// Tag left as-is, could also zero out
+					LRU_update(d_set, hit_index);
 				}
-				// else print error message.
-				// Other processor should only send command from S state.
-			} // Nothing to do if no tag match
+				else
+					printf("Unexpected command: invalidate from non-S state\n");
+			} // Nothing to do if miss
 		} else if (cmd == 4) { // Data request from L2 (RFO from snooping processor)
 			if (dc_hit(d_set, tag, &hit_index)) {
-				LRU_update(d_set, hit_index, 1); // Invalidating line.
+				LRU_update(d_set, hit_index);
 				d_line = &d_set->d_line[hit_index];
 				switch (d_line->mesi) {
 					case M: 
 						write_to_L2(addr); // Writeback to L2 (matching addr so don't need to generate)
 					case E:
+					case S:
 						d_line->mesi = I;
 						break;
-					case S:
-						// Print error // From S state Invalidate would be sent not RFO.
-						break;
 				}
-			} else { // Miss: 
-				// Print error message // Either print error or ignore (doesn't make sense to get RFO if we're in I state)
-			}
+			} // Nothing to do if miss
 		} else if (cmd == 8) {
 			// Clear cache
 			d_cache_clear(d_cache);
@@ -210,11 +204,9 @@ int dc_hit(dc_set *set, int tag, int *index) {
 }
 
 // Update LRU bits (data cache)
-int LRU_update(dc_set *set, int index, int inv) {
-	// If LRU bits are being updated as a result
-	// of an invalidate command set LRU to 000 (Least recently
-	// used) otherwise store old value.
-	int old_LRU_value = inv ? DC_LRU : set->d_line[index].lru;
+int LRU_update(dc_set *set, int index) {
+	// Store old value
+	int old_LRU_value = set->d_line[index].lru;
 	for (int i=0; i < DC_WAYS; i++) {
 		// decrement all values larger than old tag
 		if (set->d_line[i].lru > old_LRU_value)
@@ -225,11 +217,24 @@ int LRU_update(dc_set *set, int index, int inv) {
 
 // Get index of cache line to be evicted (data cache)
 int get_LRU_index(dc_set *set) {
+	int lru_inv = DC_MRU + 1; // Value to store invalid lru
+	int evict_idx = 0; // index of line to be evicted
+	
+	// Find least recently used
 	for (int i=0; i < DC_WAYS; i++) {
 		if (set->d_line[i].lru == DC_LRU)
-			return i;
+			evict_idx = i;
 	}
-	return -1; // Should never get here.
+	// If any invalid lines exist evict the least recently used
+	for (int i=0; i < DC_WAYS; i++) {
+		if (set->d_line[i].mesi == I) {
+			if (set->d_line[i].lru < lru_inv) {
+				lru_inv = set->d_line[i].lru;
+				evict_idx = i;
+			}
+		}
+	}
+	return evict_idx;
 }
 
 

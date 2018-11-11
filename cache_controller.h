@@ -40,7 +40,7 @@ typedef struct ic_set {
 // On hit stores line index into index and returns 1
 int dc_hit(dc_set *, int, int *);
 // Update LRU counters (data cache)
-int LRU_update(dc_set *, int, int);
+int LRU_update(dc_set *, int);
 // Update LRU bits (instruction cache)
 int ic_LRU_update(ic_set *, int);
 // Returns index of cache line to be evicted (data cache)
