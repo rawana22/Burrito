@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
 		} else if (cmd == 3) { // Invalidate from snooping processor
 			if (dc_hit(d_set, tag, &hit_index)) {
 				if (d_set->d_line[hit_index].mesi == S) {
-					d_set->d_line[hit_index].mesi == I;
+					d_set->d_line[hit_index].mesi = I;
 					LRU_update(d_set, hit_index);
 				}
 				else
@@ -168,8 +168,12 @@ int main(int argc, char **argv) {
 		} else {
 			printf("Error: Command out of range. Valid commands 0-4, 8,9\n");
 		}
-		// Debug, run data status
-		d_cache_status(d_cache);
+		/* Debug
+		// Debug, run d cache status
+		 d_cache_status(d_cache);
+		// Debug, run i cache status
+		i_cache_status(i_cache);
+		*/
 	}
 	// End of vector file. Print status:
 	printf("Data Cache Statistics:\n");
@@ -347,6 +351,7 @@ void d_cache_status(dc_set *cache) {
 			printf("\nTag ");
 			for (int j = 0; j < DC_WAYS; j++)
 				printf(" %x ", cache[i].d_line[j].tag);
+			printf("\n");
 		}
 	}
 	printf("\n\n");
@@ -361,14 +366,15 @@ void i_cache_status(ic_set *cache) {
 			printf("Index 0x%x:\n", i);
 			printf("Way    0    1    2    3\n");
 			printf("LRU  ");
-			for (int j = 0; j < DC_WAYS; j++)
+			for (int j = 0; j < IC_WAYS; j++)
 				printf("  %x  ", cache[i].i_line[j].lru);
 			printf("\nVALID");
-			for (int j = 0; j < DC_WAYS; j++)
+			for (int j = 0; j < IC_WAYS; j++)
 				printf("  %s  ", state_name[cache[i].i_line[j].valid]);
 			printf("\nTag  ");
-			for (int j = 0; j < DC_WAYS; j++)
+			for (int j = 0; j < IC_WAYS; j++)
 				printf(" %x ", cache[i].i_line[j].tag);
+			printf("\n");
 		}
 	}
 	printf("\n\n");

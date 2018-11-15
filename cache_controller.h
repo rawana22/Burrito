@@ -21,7 +21,7 @@ typedef struct dc_line {
 } dc_line;
 
 typedef struct dc_set {
-	dc_line d_line[8];
+	dc_line d_line[DC_WAYS];
 	int accessed; // Accessed flag for cache status & first write
 } dc_set;
 
@@ -32,7 +32,7 @@ typedef struct ic_line {
 } ic_line;
 
 typedef struct ic_set {
-	ic_line i_line[4];
+	ic_line i_line[IC_WAYS];
 	int accessed; // Acessed flag for cache status command
 } ic_set;
 
