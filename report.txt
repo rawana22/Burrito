@@ -1,0 +1,28 @@
+
+Design process:
+We first read the specification and worked out the address decoding.
+With 32 bit addresses, 16K sets, 8 way set-associative data cache, 4 way set-associative instruction cache, and 64 byte lines we derived the following:
+6 bits for offset (unused in this case as we are manipulating the cache metadata rather than content)
+14 bits for index
+12 bits of tag
+For the data cache each line requires 2 bits for the MESI bits and 3 LRU bits (for 8 ways).
+For the instruction cache each line requires a valid bit and 2 LRU bits (for 4 ways).
+
+
+We then studied the MESI protocol and LRU replacement policy. We chose to use all 0s for the least recently used as that would be consistant with initializaing the LRU bits for each line to 0 before use. We then draw a modified MESI state transition diagram based on the MESI state transition diagrams in the course notes and the modifications described in the TAs example file.
+[Diagram]
+
+In addition to this we worked out what cache accesses (and associated messages described in the assignment) that would result from each transition.
+
+We first chose the language for the project. The specification states that the simulation does not have to be clock accurate. With that being the case we decided to use c for our language. Verilog was considered but for the behavioral description needed we thought that c would be more streightforward.
+
+With the language chosen we drew up block diagrams of the code structure to work out how the project might be broken down into smaller subjects.
+
+We separated the project into the parsing, LRU, MESI, cache clear, and cache status display code. We then worked on these sub-sections independantly. One member then edited and integrated the code into the main program.
+
+We modified the code until we got the expected output given the input command vectors in the final project example file. Once that was working we then created test vectors to check state transitions that were not exercised by the example vectors. We also wrote files to ensure the cache reset command worked properly, and that the controller would behave properly with multiple indexes (as the example was only accessing one set).
+
+Assumptions:
+	Snooping commands will be transmitted with the accessing processor in the correct state (Invalidate only a valid command if we're in S state).
+	First through on first write policy is refers to the first access to a set being a write. If any line in a set has been read or written we will follow a write-back policy.
+	Snooping 
