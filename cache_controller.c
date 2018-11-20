@@ -21,7 +21,8 @@ int main(int argc, char **argv) {
 		v_mode = 1;
 
 	// output variables
-	unsigned int index, tag, cmd, addr;
+	int index, tag, cmd;
+	unsigned int addr;
 
 	// passed in log and vector file names
 	char *vec_file_name = argv[1];
@@ -208,7 +209,7 @@ int dc_hit(dc_set *set, int tag, int *index) {
 }
 
 // Update LRU bits (data cache)
-int LRU_update(dc_set *set, int index) {
+void LRU_update(dc_set *set, int index) {
 	// Store old value
 	int old_LRU_value = set->d_line[index].lru;
 	for (int i=0; i < DC_WAYS; i++) {
