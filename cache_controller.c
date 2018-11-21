@@ -57,7 +57,6 @@ int main(int argc, char **argv) {
 		ic_line *i_line;
 
 		if (cmd == 0) { // read from data cache
-			d_set->accessed = 1; // No first write / display on cache status cmd
 			dc_read_cntr++;
 			if (dc_hit(d_set, tag, &hit_index)) {
 				dc_hit_cntr++;
@@ -79,6 +78,8 @@ int main(int argc, char **argv) {
 				d_line->tag = tag; // Store new tag
 				d_line->mesi = E;
 			}
+			d_line->accessed = 1; // Cache line accessed, not cold
+			d_set->accessed = 1; // Display on cache status cmd
 		}
 		else if (cmd == 1) { // write to data cache
 			dc_write_cntr++;
@@ -99,7 +100,7 @@ int main(int argc, char **argv) {
 				if (d_line->mesi == M) // Data modified
 					write_to_L2(dc_addr(d_line, index)); // Write back
 				RFO_from_L2(addr); // Miss, must read data
-				if (!d_set->accessed) { // First write, write though policy
+				if (!d_line->accessed) { // First write, write though policy
 					write_to_L2(addr);
 					d_line->mesi = E;
 				}
@@ -108,8 +109,8 @@ int main(int argc, char **argv) {
 				}
 				d_line->tag = tag; // Store new tag
 			}
-				
-			d_set->accessed = 1; // No first write / display on cache status cmd
+			d_line->accessed = 1; // Cache line written, not cold line.
+			d_set->accessed = 1; // Display on cache status cmd
 		} else if (cmd == 2) { // read from instruction cache
 			i_set->accessed = 1; // display on cache status cmd
 			ic_read_cntr++;
@@ -258,7 +259,7 @@ int ic_hit(ic_set *set, int tag, int *index) {
 }
 
 // Update LRU bits (instruction cache)
-int ic_LRU_update(ic_set *set, int index) {
+void ic_LRU_update(ic_set *set, int index) {
 	int old_LRU_value = set->i_line[index].lru;
 	for (int i=0; i < IC_WAYS; i++) {
 		// decrement all values larger than old tag
@@ -279,27 +280,20 @@ int ic_get_LRU_index(ic_set *set) {
 
 // Parse a line of the input vector file
 int parse(FILE *fp, int *index, int *tag, int *command, unsigned int * address) {
-	int read_values = fscanf(fp, "%u %x", command, address);
-	int retval = 0;
-	if(read_values == EOF) {
-		retval =  -1; // End of file
-	} else if (read_values == 1) { // Unspecified if commands 8 and 9 include an address.
-		if (*command == 8 || *command == 9) {
-			*index = 0; // Index and tag unused in this case but given default values.
-			*tag = 0;
-		}
-		else {
-			printf("Error missing address following command.\n");
-			retval = -1;
-		}
-	} else if (read_values == 2) { // Both values read
+	int read_val = fscanf(fp, "%d", command);
+	if (read_val == EOF)
+		return -1; // End of file return
+		
+	if ((*command == 8) || (*command == 9)) {
+		fscanf(fp, "%*[^\n]");
+		*index = 0;
+		*tag = 0;
+	} else {
+		fscanf(fp, "%x", address);
 		*index = (*address >> 6) & 0x3fff; // index: bits 19-6
 		*tag = (*address >> 20) & 0xfff; // tag: bits 32-20
-	} else {
-		printf("parsing error.\n");
-		retval -1;
 	}
-	return retval;
+	return 0;
 }
 
 

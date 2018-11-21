@@ -18,11 +18,12 @@ typedef struct dc_line {
 	int lru;
 	int tag;
 	mesi_t mesi;
+	int accessed;
 } dc_line;
 
 typedef struct dc_set {
 	dc_line d_line[DC_WAYS];
-	int accessed; // Accessed flag for cache status & first write
+	int accessed;
 } dc_set;
 
 typedef struct ic_line {
@@ -42,7 +43,7 @@ int dc_hit(dc_set *, int, int *);
 // Update LRU counters (data cache)
 void LRU_update(dc_set *, int);
 // Update LRU bits (instruction cache)
-int ic_LRU_update(ic_set *, int);
+void ic_LRU_update(ic_set *, int);
 // Returns index of cache line to be evicted (data cache)
 int get_LRU_index(dc_set *);
 // Get index of cache line to be evicted (instruction cache)
