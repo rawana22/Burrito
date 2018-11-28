@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
 	printf("Number of cache reads: %d.\n", dc_read_cntr);
 	printf("Number of cache writes: %d.\n", dc_write_cntr);
 	printf("Number of cache hits: %d.\n", dc_hit_cntr);
-	printf("Nunber of cache misses: %d.\n", dc_miss_cntr);
+	printf("Number of cache misses: %d.\n", dc_miss_cntr);
 	hit_ratio = ((dc_read_cntr + dc_write_cntr) == 0) ? 0 : dc_hit_cntr / (float)(dc_read_cntr + dc_write_cntr);
 	printf("Cache hit ratio: %f.\n\n", hit_ratio);
 
